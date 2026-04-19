@@ -3,9 +3,6 @@ Taylor's Tool Life Equation Solver
 ====================================
 Professional engineering calculator with animated background,
 per-module documentation, session logging, and a conclusion page.
-
-Taylor's Equation:  V · T^n = C
-Extended Equation:  V · T^n · f^x · d^y = C_ext
 """
 
 import streamlit as st
@@ -42,19 +39,19 @@ def log_result(module_name, inputs: dict, outputs: dict, conclusion: str):
 #  Background animation + global styles
 # ─────────────────────────────────────────────
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 /* ─── App reset ─────────────────────────────── */
-.stApp { background: transparent !important; font-family: 'Barlow', sans-serif; }
-section[data-testid="stSidebar"] { background: #0d1f35 !important; }
-section[data-testid="stSidebar"] * { color: #a8c4e0 !important; }
+.stApp { background: transparent !important; font-family: 'Inter', sans-serif; }
+section[data-testid="stSidebar"] { background: #0f172a !important; border-right: 1px solid #1e293b; }
+section[data-testid="stSidebar"] * { color: #cbd5e1 !important; }
 
 /* ─── Fixed background ──────────────────────── */
 .eng-bg {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
-    background: #edf1f7;
+    background: #f4f6f9;
     z-index: -20;
     pointer-events: none;
     overflow: hidden;
@@ -62,30 +59,30 @@ section[data-testid="stSidebar"] * { color: #a8c4e0 !important; }
 .eng-bg::before {
     content: '';
     position: absolute; inset: 0;
-    background-image: radial-gradient(circle, rgba(44,123,229,0.18) 1.5px, transparent 1.5px);
-    background-size: 38px 38px;
+    background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+    background-size: 40px 40px;
 }
 .eng-bg::after {
     content: '';
     position: absolute; inset: 0;
     background-image:
-        linear-gradient(rgba(44,123,229,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(44,123,229,0.04) 1px, transparent 1px);
-    background-size: 76px 76px;
+        linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+    background-size: 80px 80px;
 }
 
 /* ─── Scanning line ─────────────────────────── */
 @keyframes scan-down {
-    0%   { top: -3px; opacity: 0; }
+    0%   { top: -5px; opacity: 0; }
     5%   { opacity: 1; }
-    95%  { opacity: 0.6; }
+    95%  { opacity: 0.4; }
     100% { top: 100vh; opacity: 0; }
 }
 .scan-line {
-    position: fixed; left: 0; width: 100%; height: 2px;
-    background: linear-gradient(90deg, transparent 0%, rgba(44,123,229,0.25) 30%,
-                rgba(44,123,229,0.55) 50%, rgba(44,123,229,0.25) 70%, transparent 100%);
-    animation: scan-down 9s ease-in-out infinite;
+    position: fixed; left: 0; width: 100%; height: 3px;
+    background: linear-gradient(90deg, transparent 0%, rgba(37, 99, 235, 0.2) 30%, 
+                rgba(37, 99, 235, 0.6) 50%, rgba(37, 99, 235, 0.2) 70%, transparent 100%);
+    animation: scan-down 8s ease-in-out infinite;
     pointer-events: none; z-index: -1;
 }
 
@@ -96,216 +93,129 @@ section[data-testid="stSidebar"] * { color: #a8c4e0 !important; }
 .gear-wrap { position: fixed; pointer-events: none; z-index: -1; }
 .gear-ring {
     border-radius: 50%;
-    border: 2px solid rgba(44,123,229,0.18);
-    animation: spin-cw 28s linear infinite;
+    border: 2px solid rgba(148, 163, 184, 0.2);
+    animation: spin-cw 35s linear infinite;
     position: relative;
 }
 .gear-ring::before {
-    content: ''; position: absolute;
-    border-radius: 50%;
-    border: 1px dashed rgba(44,123,229,0.12);
-    animation: spin-ccw 18s linear infinite;
-    inset: 10px;
+    content: ''; position: absolute; border-radius: 50%;
+    border: 2px dashed rgba(37, 99, 235, 0.15);
+    animation: spin-ccw 25s linear infinite;
+    inset: 12px;
 }
 .gear-ring::after {
-    content: ''; position: absolute;
-    border-radius: 50%;
-    border: 1px solid rgba(44,123,229,0.08);
-    inset: 20px;
-    animation: spin-cw 12s linear infinite;
+    content: ''; position: absolute; border-radius: 50%;
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    inset: 24px;
+    animation: spin-cw 15s linear infinite;
 }
 
 /* ─── Chip particles ────────────────────────── */
 @keyframes chip-rise {
-    0%   { transform: translate(0,0) rotate(0deg);   opacity: 0; }
-    8%   { opacity: 0.75; }
-    88%  { opacity: 0.4; }
+    0%   { transform: translate(0,0) rotate(0deg);    opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.3; }
     100% { transform: translate(var(--tx),var(--ty)) rotate(var(--rot)); opacity: 0; }
 }
 .chip {
     position: fixed;
     animation: chip-rise linear infinite;
     pointer-events: none; z-index: -1; opacity: 0;
-    border-radius: 1px;
+    border-radius: 2px;
+    box-shadow: 0 0 4px rgba(255,255,255,0.5);
 }
 
-/* ─── Pulsing dots ──────────────────────────── */
-@keyframes pulse-dot {
-    0%, 100% { transform: scale(1);   opacity: 0.5; }
-    50%       { transform: scale(1.7); opacity: 1;   }
-}
-.corner-dot {
-    position: fixed; width: 6px; height: 6px;
-    background: #2c7be5; border-radius: 50%;
-    animation: pulse-dot 3s ease-in-out infinite;
-    pointer-events: none; z-index: -1;
-}
-
-/* ─── Cards ─────────────────────────────────── */
-.calc-card {
-    background: #ffffff;
-    border: 1px solid #d0dce8; border-radius: 8px;
-    padding: 22px 26px; margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
+/* ─── Cards & Containers ────────────────────── */
 .module-info-card {
-    background: linear-gradient(135deg, #0d1f35 0%, #1a3a5c 100%);
-    border: 1px solid #2c7be5; border-left: 4px solid #2c7be5;
-    border-radius: 8px; padding: 20px 24px; margin-bottom: 22px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid #334155; border-left: 4px solid #2563eb;
+    border-radius: 8px; padding: 22px 26px; margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 .module-info-card h4 {
-    margin: 0 0 10px 0;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.15rem; letter-spacing: 0.05em;
-    color: #7ec8ff; text-transform: uppercase;
+    margin: 0 0 12px 0; font-family: 'Inter', sans-serif;
+    font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em;
+    color: #38bdf8; text-transform: uppercase;
 }
-.module-info-card p { margin: 4px 0; font-size: 0.88rem; line-height: 1.5; color: #c8e0f8; }
-.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-.info-col  { background: rgba(255,255,255,0.06); border-radius: 5px; padding: 10px 14px; }
-.info-col strong { display: block; font-size: 0.76rem; letter-spacing: 0.08em;
-                   text-transform: uppercase; color: #4db8ff; margin-bottom: 5px; }
-.info-col span { font-size: 0.84rem; color: #c0d8f0; line-height: 1.6; }
+.module-info-card p { margin: 4px 0; font-size: 0.9rem; line-height: 1.6; color: #f1f5f9; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.info-col  { background: rgba(255,255,255,0.05); border-radius: 6px; padding: 12px 16px; }
+.info-col strong { display: block; font-size: 0.75rem; letter-spacing: 0.1em;
+                   text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; }
+.info-col span { font-size: 0.85rem; color: #cbd5e1; line-height: 1.7; font-family: 'Share Tech Mono', monospace; }
 
-/* ─── Section titles ────────────────────────── */
+/* ─── Typography ────────────────────────────── */
 .section-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1rem; font-weight: 700; letter-spacing: 0.04em;
-    color: #0d1f35; border-bottom: 2px solid #2c7be5;
-    padding-bottom: 5px; margin-bottom: 14px; text-transform: uppercase;
+    font-family: 'Inter', sans-serif; font-size: 1.05rem; font-weight: 700;
+    color: #0f172a; border-bottom: 2px solid #2563eb;
+    padding-bottom: 6px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.03em;
 }
-
-/* ─── Page title ────────────────────────────── */
 .page-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 2rem; font-weight: 700;
-    color: #0d1f35; letter-spacing: 0.02em; margin-bottom: 2px;
+    font-family: 'Inter', sans-serif; font-size: 2.2rem; font-weight: 800;
+    color: #0f172a; letter-spacing: -0.02em; margin-bottom: 4px;
 }
-.page-subtitle { font-size: 0.9rem; color: #5a7a9a; margin-bottom: 20px; }
+.page-subtitle { font-size: 0.95rem; color: #64748b; margin-bottom: 24px; font-weight: 500; }
 
-/* ─── Formula box ───────────────────────────── */
+/* ─── Math & Result Boxes ───────────────────── */
 .formula-box {
-    background: #0d1f35; border: 1px solid #2c7be5; border-radius: 6px;
-    padding: 10px 16px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.95rem; color: #7ec8ff; margin-bottom: 16px; letter-spacing: 0.03em;
+    background: #1e293b; border: 1px solid #334155; border-radius: 6px;
+    padding: 12px 18px; font-family: 'Share Tech Mono', monospace;
+    font-size: 1rem; color: #38bdf8; margin-bottom: 20px; letter-spacing: 0.03em;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); text-align: center;
 }
-
-/* ─── Result / error / info boxes ──────────── */
 .result-box {
-    background: #f0f7ff; border-left: 4px solid #2c7be5; border-radius: 5px;
-    padding: 14px 18px; margin-top: 14px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.88rem; color: #0d2540; white-space: pre-wrap; line-height: 1.7;
+    background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 6px;
+    padding: 16px 20px; margin-top: 16px;
+    font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;
+    color: #064e3b; white-space: pre-wrap; line-height: 1.6;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 .error-box {
-    background: #fff0f0; border-left: 4px solid #d9534f; border-radius: 5px;
-    padding: 12px 16px; margin-top: 12px; color: #a02020; font-size: 0.88rem;
+    background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 6px;
+    padding: 14px 18px; margin-top: 16px; color: #991b1b; font-size: 0.9rem; font-weight: 500;
 }
 .info-box {
-    background: #f0fbf3; border-left: 4px solid #3cb371; border-radius: 5px;
-    padding: 11px 15px; margin-top: 10px; font-size: 0.88rem; color: #1d5e30;
+    background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px;
+    padding: 14px 18px; margin-top: 12px; font-size: 0.9rem; color: #92400e; line-height: 1.6;
 }
 
-/* ─── Conclusion page ───────────────────────── */
-.concl-header {
-    background: linear-gradient(135deg, #0d1f35, #1a3a5c);
-    border-radius: 8px; padding: 20px 26px; margin-bottom: 18px;
-}
-.concl-header h2 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.5rem; letter-spacing: 0.04em;
-    color: #7ec8ff; margin: 0 0 6px 0;
-}
-.log-entry {
-    background: #fff; border: 1px solid #d0dce8; border-left: 4px solid #2c7be5;
-    border-radius: 6px; padding: 16px 20px; margin-bottom: 14px;
-}
-.le-header {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.05rem; font-weight: 700; color: #0d1f35; margin-bottom: 8px;
-}
-.le-time { font-size: 0.75rem; color: #8aadcc; float: right; }
-.log-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-.log-kv-col { background: #f4f8ff; border-radius: 4px; padding: 8px 12px; }
-.log-kv-col strong { display: block; font-size: 0.74rem; text-transform: uppercase;
-                     letter-spacing: 0.07em; color: #2c7be5; margin-bottom: 3px; }
-.log-kv-col span { font-family: 'Share Tech Mono', monospace; font-size: 0.82rem; color: #1a2e42; }
-.concl-text {
-    margin-top: 10px; background: #f0f7ff; border-radius: 4px;
-    padding: 9px 12px; font-size: 0.85rem; color: #1a3a5c; font-style: italic;
-}
-.empty-state {
-    text-align: center; padding: 52px; color: #8aadcc;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em;
-}
-
-/* ─── Buttons ───────────────────────────────── */
+/* ─── Buttons & Inputs ──────────────────────── */
 .stButton > button {
-    background: #2c7be5 !important; color: #fff !important;
-    border: none !important; border-radius: 5px !important;
-    padding: 8px 22px !important; font-weight: 600 !important;
-    font-family: 'Barlow', sans-serif !important;
-    font-size: 0.88rem !important; letter-spacing: 0.03em !important;
+    background: #2563eb !important; color: #fff !important;
+    border: none !important; border-radius: 6px !important;
+    padding: 10px 24px !important; font-weight: 600 !important;
+    font-family: 'Inter', sans-serif !important; letter-spacing: 0.03em !important;
+    transition: all 0.2s ease;
 }
-.stButton > button:hover { background: #1a62c4 !important; }
+.stButton > button:hover { background: #1d4ed8 !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+label { font-size: 0.85rem !important; font-weight: 600 !important; color: #334155 !important; }
 
-/* ─── Input labels ──────────────────────────── */
-label { font-size: 0.85rem !important; font-weight: 500 !important; color: #2a3f55 !important; }
-
-/* ─── Data table ────────────────────────────── */
-.data-table { width:100%; border-collapse:collapse; font-size:0.88rem; margin-top:8px; }
-.data-table th { background:#2c7be5; color:#fff; padding:8px 12px; text-align:center; }
-.data-table td { padding:6px 12px; border-bottom:1px solid #e0ebf4; text-align:center; }
-.data-table tr:nth-child(even) td { background:#f4f8ff; }
-hr { border-color: #ccd8e8 !important; }
+/* ─── Tables & Dividers ─────────────────────── */
+.data-table { width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:10px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.data-table th { background:#2563eb; color:#fff; padding:10px 14px; text-align:center; font-weight: 600; }
+.data-table td { padding:8px 14px; border-bottom:1px solid #e2e8f0; text-align:center; color: #334155; }
+.data-table tr:nth-child(even) td { background:#f8fafc; }
+hr { border-color: #cbd5e1 !important; }
 </style>
 
-<!-- Background DOM -->
 <div class="eng-bg"></div>
 <div class="scan-line"></div>
 
-<!-- Rotating gears in corners -->
-<div class="gear-wrap" style="top:-30px;left:-30px;">
-  <div class="gear-ring" style="width:140px;height:140px;"></div>
+<div class="gear-wrap" style="top:-40px;left:-40px;">
+  <div class="gear-ring" style="width:160px;height:160px;"></div>
 </div>
 <div class="gear-wrap" style="bottom:-30px;right:-30px;">
-  <div class="gear-ring" style="width:100px;height:100px;animation-direction:reverse;"></div>
-</div>
-<div class="gear-wrap" style="top:120px;right:-20px;">
-  <div class="gear-ring" style="width:60px;height:60px;animation-duration:20s;"></div>
+  <div class="gear-ring" style="width:120px;height:120px;animation-direction:reverse;"></div>
 </div>
 
-<!-- Pulsing corner accent dots -->
-<div class="corner-dot" style="top:12px;left:12px;animation-delay:0s;"></div>
-<div class="corner-dot" style="top:12px;right:12px;animation-delay:1s;background:#e8820c;"></div>
-<div class="corner-dot" style="bottom:12px;left:12px;animation-delay:2s;background:#3cb371;"></div>
-<div class="corner-dot" style="bottom:12px;right:12px;animation-delay:0.5s;"></div>
-
-<!-- 24 floating metal chip particles -->
-<div class="chip" style="width:7px;height:2px;background:rgba(44,123,229,0.45);left:5%;top:92%;--tx:-28px;--ty:-480px;--rot:720deg;animation-duration:13s;animation-delay:0s;"></div>
-<div class="chip" style="width:4px;height:2px;background:rgba(160,185,210,0.55);left:12%;top:88%;--tx:22px;--ty:-520px;--rot:-540deg;animation-duration:10s;animation-delay:1.8s;"></div>
-<div class="chip" style="width:9px;height:2px;background:rgba(44,123,229,0.35);left:22%;top:94%;--tx:-18px;--ty:-460px;--rot:360deg;animation-duration:12s;animation-delay:3.2s;"></div>
-<div class="chip" style="width:3px;height:3px;background:rgba(232,130,12,0.45);border-radius:50%;left:31%;top:89%;--tx:38px;--ty:-400px;--rot:180deg;animation-duration:9s;animation-delay:0.6s;"></div>
-<div class="chip" style="width:6px;height:2px;background:rgba(100,160,230,0.5);left:42%;top:96%;--tx:-22px;--ty:-540px;--rot:900deg;animation-duration:14s;animation-delay:2.4s;"></div>
-<div class="chip" style="width:8px;height:2px;background:rgba(140,175,215,0.5);left:53%;top:91%;--tx:32px;--ty:-450px;--rot:-720deg;animation-duration:11s;animation-delay:4.1s;"></div>
-<div class="chip" style="width:4px;height:4px;background:rgba(232,130,12,0.35);border-radius:50%;left:61%;top:94%;--tx:-12px;--ty:-510px;--rot:1080deg;animation-duration:10.5s;animation-delay:1.1s;"></div>
-<div class="chip" style="width:6px;height:2px;background:rgba(44,123,229,0.4);left:71%;top:87%;--tx:42px;--ty:-420px;--rot:-360deg;animation-duration:12.5s;animation-delay:3.7s;"></div>
-<div class="chip" style="width:3px;height:2px;background:rgba(180,205,230,0.6);left:80%;top:92%;--tx:-18px;--ty:-470px;--rot:540deg;animation-duration:9.5s;animation-delay:0.9s;"></div>
-<div class="chip" style="width:10px;height:2px;background:rgba(44,100,200,0.35);left:88%;top:85%;--tx:12px;--ty:-500px;--rot:-1080deg;animation-duration:15s;animation-delay:2.7s;"></div>
-<div class="chip" style="width:5px;height:2px;background:rgba(200,215,230,0.5);left:17%;top:55%;--tx:-32px;--ty:-310px;--rot:720deg;animation-duration:11s;animation-delay:6.5s;"></div>
-<div class="chip" style="width:4px;height:2px;background:rgba(44,123,229,0.4);left:38%;top:48%;--tx:27px;--ty:-260px;--rot:-360deg;animation-duration:8s;animation-delay:5.2s;"></div>
-<div class="chip" style="width:6px;height:2px;background:rgba(160,195,230,0.45);left:63%;top:52%;--tx:-14px;--ty:-290px;--rot:540deg;animation-duration:9s;animation-delay:7.3s;"></div>
-<div class="chip" style="width:3px;height:3px;background:rgba(60,179,113,0.4);border-radius:50%;left:76%;top:58%;--tx:28px;--ty:-330px;--rot:1080deg;animation-duration:8.5s;animation-delay:4.8s;"></div>
-<div class="chip" style="width:5px;height:2px;background:rgba(44,123,229,0.35);left:91%;top:72%;--tx:-38px;--ty:-360px;--rot:-720deg;animation-duration:13s;animation-delay:1.4s;"></div>
-<div class="chip" style="width:7px;height:2px;background:rgba(180,210,240,0.4);left:6%;top:62%;--tx:16px;--ty:-410px;--rot:360deg;animation-duration:12s;animation-delay:8.2s;"></div>
-<div class="chip" style="width:4px;height:2px;background:rgba(232,130,12,0.3);left:28%;top:74%;--tx:-26px;--ty:-370px;--rot:-540deg;animation-duration:10s;animation-delay:6.8s;"></div>
-<div class="chip" style="width:6px;height:2px;background:rgba(140,180,220,0.5);left:47%;top:68%;--tx:19px;--ty:-320px;--rot:720deg;animation-duration:11.5s;animation-delay:4.0s;"></div>
-<div class="chip" style="width:3px;height:3px;background:rgba(44,123,229,0.4);border-radius:50%;left:68%;top:76%;--tx:-22px;--ty:-390px;--rot:900deg;animation-duration:9s;animation-delay:2.5s;"></div>
-<div class="chip" style="width:8px;height:2px;background:rgba(100,160,230,0.4);left:84%;top:35%;--tx:32px;--ty:-210px;--rot:-360deg;animation-duration:8s;animation-delay:9.2s;"></div>
-<div class="chip" style="width:5px;height:2px;background:rgba(220,232,245,0.55);left:95%;top:50%;--tx:-20px;--ty:-280px;--rot:540deg;animation-duration:10s;animation-delay:3.0s;"></div>
-<div class="chip" style="width:4px;height:2px;background:rgba(44,123,229,0.3);left:3%;top:30%;--tx:15px;--ty:-200px;--rot:-720deg;animation-duration:7.5s;animation-delay:10s;"></div>
-<div class="chip" style="width:6px;height:2px;background:rgba(232,130,12,0.35);left:55%;top:25%;--tx:-18px;--ty:-180px;--rot:360deg;animation-duration:6.5s;animation-delay:11s;"></div>
-<div class="chip" style="width:3px;height:3px;background:rgba(60,179,113,0.35);border-radius:50%;left:74%;top:18%;--tx:25px;--ty:-150px;--rot:1080deg;animation-duration:7s;animation-delay:8.5s;"></div>
+<div class="chip" style="width:8px;height:2px;background:#2563eb;left:10%;top:95%;--tx:-30px;--ty:-400px;--rot:720deg;animation-duration:14s;animation-delay:0s;"></div>
+<div class="chip" style="width:5px;height:3px;background:#f59e0b;left:25%;top:90%;--tx:40px;--ty:-500px;--rot:-360deg;animation-duration:11s;animation-delay:2s;"></div>
+<div class="chip" style="width:12px;height:2px;background:#94a3b8;left:45%;top:98%;--tx:-20px;--ty:-600px;--rot:1080deg;animation-duration:16s;animation-delay:4s;"></div>
+<div class="chip" style="width:4px;height:4px;background:#10b981;border-radius:50%;left:65%;top:92%;--tx:25px;--ty:-450px;--rot:180deg;animation-duration:12s;animation-delay:1s;"></div>
+<div class="chip" style="width:7px;height:2px;background:#38bdf8;left:85%;top:88%;--tx:-45px;--ty:-350px;--rot:-720deg;animation-duration:13s;animation-delay:5s;"></div>
+<div class="chip" style="width:9px;height:3px;background:#cbd5e1;left:15%;top:50%;--tx:35px;--ty:-300px;--rot:540deg;animation-duration:15s;animation-delay:3s;"></div>
+<div class="chip" style="width:6px;height:2px;background:#2563eb;left:55%;top:60%;--tx:-25px;--ty:-400px;--rot:-540deg;animation-duration:10s;animation-delay:6s;"></div>
+<div class="chip" style="width:5px;height:5px;background:#f59e0b;border-radius:50%;left:80%;top:45%;--tx:30px;--ty:-250px;--rot:900deg;animation-duration:14s;animation-delay:0.5s;"></div>
 """, unsafe_allow_html=True)
 
 
@@ -330,10 +240,10 @@ def find_n_and_C(speeds, lives):
     log_T = np.log(np.array(lives))
     log_V = np.log(np.array(speeds))
     coeffs = np.polyfit(log_T, log_V, 1)
-    b, a = coeffs   # slope=-n, intercept=log(C)
-    n_fit = -b
-    C_fit = np.exp(a)
-    y_hat  = np.polyval(coeffs, log_T)
+    slope, intercept = coeffs
+    n_fit = -slope
+    C_fit = np.exp(intercept)
+    y_hat = np.polyval(coeffs, log_T)
     ss_res = np.sum((log_V - y_hat) ** 2)
     ss_tot = np.sum((log_V - np.mean(log_V)) ** 2)
     r2 = 1 - ss_res / ss_tot if ss_tot != 0 else 1.0
@@ -349,34 +259,31 @@ def extended_taylor(V0, T0, n, f0, d0, x, y, delta_V, delta_f, delta_d):
     return T1, C_ext, V1, f1, d1
 
 def compare_crossover(nA, CA, nB, CB):
-    """Numerical crossover speed where T_A = T_B."""
-    V_vals = np.linspace(0.5, max(CA, CB) * 2, 8000)
-    def diff(V):
-        try:
-            return tool_life_from_C(V, CA, nA) - tool_life_from_C(V, CB, nB)
-        except Exception:
-            return 0
-    diffs = [diff(v) for v in V_vals]
-    for i in range(len(diffs) - 1):
-        if np.sign(diffs[i]) != np.sign(diffs[i+1]) and diffs[i] != 0:
-            try:
-                from scipy.optimize import brentq
-                return brentq(diff, V_vals[i], V_vals[i+1])
-            except Exception:
-                return (V_vals[i] + V_vals[i+1]) / 2
-    return None
+    """Analytically calculate crossover speed where T_A = T_B."""
+    if nA == nB:
+        return None  # Parallel lines in log-log space
+    
+    p = (1.0 / nB) - (1.0 / nA)
+    try:
+        # V^p = C_B^(1/n_B) / C_A^(1/n_A)
+        ratio = (CB ** (1.0 / nB)) / (CA ** (1.0 / nA))
+        V_cross = ratio ** (1.0 / p)
+        return V_cross
+    except Exception:
+        return None
 
 
 # ─────────────────────────────────────────────
-#  Plotting helpers
+#  Plotting helpers (Upgraded Aesthetics)
 # ─────────────────────────────────────────────
 
 PLOT_RC = {
-    "figure.facecolor": "#f8fafd", "axes.facecolor": "#f8fafd",
-    "axes.edgecolor": "#c0cede", "axes.grid": True,
-    "grid.color": "#d0dce8", "grid.linestyle": "--", "grid.linewidth": 0.6,
-    "axes.labelcolor": "#1a2e42", "axes.titlecolor": "#0d1f35",
-    "xtick.color": "#4a6a8a", "ytick.color": "#4a6a8a",
+    "figure.facecolor": "#ffffff", "axes.facecolor": "#f8fafc",
+    "axes.edgecolor": "#cbd5e1", "axes.grid": True,
+    "grid.color": "#e2e8f0", "grid.linestyle": "-", "grid.linewidth": 1.0,
+    "axes.labelcolor": "#334155", "axes.titlecolor": "#0f172a",
+    "xtick.color": "#64748b", "ytick.color": "#64748b",
+    "font.family": "sans-serif",
 }
 
 def apply_style():
@@ -384,52 +291,86 @@ def apply_style():
 
 def make_loglog_plot(speeds, lives, n=None, C=None, title="log(V) vs log(T)"):
     apply_style()
-    fig, ax = plt.subplots(figsize=(6.5, 4.2))
-    ax.scatter(lives, speeds, color="#2c7be5", s=60, zorder=5, label="Data",
-               edgecolors="#0d1f35", linewidths=0.5)
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.scatter(lives, speeds, color="#2563eb", s=80, zorder=5, label="Experimental Data",
+               edgecolors="#ffffff", linewidths=1.5, alpha=0.9)
     if n is not None and C is not None:
-        T_fit = np.linspace(min(lives)*0.5, max(lives)*1.6, 400)
+        T_fit = np.linspace(min(lives)*0.3, max(lives)*2.0, 400)
         V_fit = [cutting_speed_from_C(t, C, n) for t in T_fit]
-        ax.plot(T_fit, V_fit, color="#e8820c", lw=2, label=f"n={n:.4f}, C={C:.3f}")
-    ax.set_xscale("log"); ax.set_yscale("log")
-    ax.set_xlabel("Tool Life  T  (min)", fontsize=10)
-    ax.set_ylabel("Cutting Speed  V  (m/min)", fontsize=10)
-    ax.set_title(title, fontsize=11, fontweight="bold")
-    ax.legend(fontsize=9)
+        ax.plot(T_fit, V_fit, color="#f59e0b", lw=2.5, label=f"Fit: n={n:.4f}, C={C:.2f}")
+    
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Tool Life  T  (min)", fontsize=11, fontweight="500")
+    ax.set_ylabel("Cutting Speed  V  (m/min)", fontsize=11, fontweight="500")
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=12)
+    ax.legend(fontsize=10)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.yaxis.set_major_formatter(ticker.ScalarFormatter())
     fig.tight_layout()
     return fig
 
-def make_comparison_plot(nA, CA, nB, CB, crossover=None):
+def make_comparison_plot(nA, CA, nB, CB, V_eval, crossover=None):
     apply_style()
-    V_max = max(CA, CB) * 1.2
-    V_vals = np.linspace(0.5, V_max, 600)
+    
+    # Establish a smart dynamic range so asymptotes don't ruin the Y-axis
+    if crossover and 0 < crossover < V_eval * 5:
+        V_max_plot = max(V_eval, crossover) * 1.5
+    else:
+        V_max_plot = V_eval * 2.5
+        
+    V_min_plot = max(0.1, V_max_plot * 0.05)
+    V_vals = np.linspace(V_min_plot, V_max_plot, 800)
+    
     T_A = [tool_life_from_C(v, CA, nA) for v in V_vals]
     T_B = [tool_life_from_C(v, CB, nB) for v in V_vals]
-    fig, ax = plt.subplots(figsize=(6.5, 4.2))
-    ax.plot(V_vals, T_A, color="#2c7be5", lw=2, label="Tool A")
-    ax.plot(V_vals, T_B, color="#e8820c", lw=2, label="Tool B")
-    if crossover:
-        ax.axvline(crossover, color="#3cb371", ls="--", lw=1.4,
-                   label=f"Crossover  V = {crossover:.3f}")
-    ax.set_xlabel("Cutting Speed V", fontsize=10)
-    ax.set_ylabel("Tool Life T", fontsize=10)
-    ax.set_title("Tool A vs Tool B — Life Comparison", fontsize=11, fontweight="bold")
-    ax.legend(fontsize=9)
+
+    fig, ax = plt.subplots(figsize=(7.5, 4.8))
+    ax.plot(V_vals, T_A, color="#2563eb", lw=2.5, label="Tool A", zorder=3)
+    ax.plot(V_vals, T_B, color="#f59e0b", lw=2.5, label="Tool B", zorder=3)
+
+    # Calculate Tool Life at Eval Speed
+    T_A_eval = tool_life_from_C(V_eval, CA, nA)
+    T_B_eval = tool_life_from_C(V_eval, CB, nB)
+
+    # Plot Eval markers
+    ax.axvline(V_eval, color="#64748b", ls=":", lw=2, label=f"Eval V = {V_eval:.1f}", zorder=1)
+    ax.scatter([V_eval, V_eval], [T_A_eval, T_B_eval], color="#64748b", s=60, zorder=4)
+
+    # Plot Crossover markers
+    if crossover and crossover <= V_max_plot:
+        T_cross = tool_life_from_C(crossover, CA, nA)
+        ax.axvline(crossover, color="#10b981", ls="--", lw=1.5, label=f"Crossover V = {crossover:.2f}", zorder=1)
+        ax.scatter([crossover], [T_cross], color="#10b981", s=90, edgecolor="white", zorder=5)
+
+    # Dynamic Y-axis limits
+    y_max = max(T_A_eval, T_B_eval) * 2.5
+    if crossover and crossover <= V_max_plot:
+        y_max = max(y_max, T_cross * 1.5)
+        
+    ax.set_ylim(0, y_max)
+    ax.set_xlim(V_min_plot, V_max_plot)
+
+    ax.set_xlabel("Cutting Speed V (m/min)", fontsize=11, fontweight="500")
+    ax.set_ylabel("Tool Life T (min)", fontsize=11, fontweight="500")
+    ax.set_title("Tool A vs Tool B — Life Comparison", fontsize=12, fontweight="bold", pad=12)
+    ax.legend(fontsize=10, loc="upper right")
     fig.tight_layout()
     return fig
 
 def make_bar_plot(labels, values, colors, ylabel, title):
     apply_style()
-    fig, ax = plt.subplots(figsize=(4.5, 3.2))
-    bars = ax.bar(labels, values, color=colors, width=0.45, edgecolor="#c0cede", lw=0.8)
+    fig, ax = plt.subplots(figsize=(5, 3.5))
+    bars = ax.bar(labels, values, color=colors, width=0.5, edgecolor="#ffffff", lw=1.5, alpha=0.9)
     for bar, val in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(values)*0.02,
-                f"{val:.2f}", ha="center", va="bottom", fontsize=10, color="#1a2e42")
-    ax.set_ylabel(ylabel, fontsize=10)
-    ax.set_title(title, fontsize=11, fontweight="bold")
-    ax.set_ylim(0, max(values) * 1.28)
+                f"{val:.2f}", ha="center", va="bottom", fontsize=11, color="#0f172a", fontweight="600")
+    
+    ax.set_ylabel(ylabel, fontsize=11, fontweight="500")
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=12)
+    ax.set_ylim(0, max(values) * 1.25)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     fig.tight_layout()
     return fig
 
@@ -451,7 +392,7 @@ with st.sidebar:
         "7. Conclusion & Summary",
     ])
     st.markdown("---")
-    st.markdown("**Core Equations**\n\n`V · T^n = C`\n\n`V · T^n · f^x · d^y = C`\n\n`n = −slope (log-log)`\n\n`C = exp(intercept)`")
+    st.markdown("**Core Equations**\n\n`V · T^n = C`\n\n`V · T^n · f^x · d^y = C_ext`\n\n`n = −slope (log-log)`\n\n`C = exp(intercept)`")
     st.markdown("---")
     st.caption(f"Calculations logged: **{len(st.session_state.calc_log)}**")
     if st.button("Clear log"):
@@ -529,13 +470,15 @@ if module.startswith("1"):
                 TA = tool_life_from_C(V_eval, CA, nA)
                 TB = tool_life_from_C(V_eval, CB, nB)
                 winner = "Tool A" if TA > TB else ("Tool B" if TB > TA else "Equal")
+                
+                # Analytical crossover
                 crossover = compare_crossover(nA, CA, nB, CB)
 
                 res = (
                     f"At V = {V_eval}:\n"
-                    f"  Tool A life  T_A = ({CA}/{V_eval})^(1/{nA})  =  {TA:.4f}\n"
-                    f"  Tool B life  T_B = ({CB}/{V_eval})^(1/{nB})  =  {TB:.4f}\n\n"
-                    f"  Life difference : {abs(TA-TB):.4f}\n"
+                    f"  Tool A life  T_A = ({CA}/{V_eval})^(1/{nA})  =  {TA:.4f} min\n"
+                    f"  Tool B life  T_B = ({CB}/{V_eval})^(1/{nB})  =  {TB:.4f} min\n\n"
+                    f"  Life difference : {abs(TA-TB):.4f} min\n"
                     f"  Superior tool   : {winner}"
                 )
                 if crossover:
@@ -544,13 +487,15 @@ if module.startswith("1"):
 
                 concl = (f"At V={V_eval}: T_A={TA:.3f}, T_B={TB:.3f}. {winner} is superior. "
                          + (f"Crossover at V={crossover:.3f}." if crossover else ""))
+                
                 log_result("1 — Tool Comparison",
                            {"n_A": nA, "C_A": CA, "n_B": nB, "C_B": CB, "V_eval": V_eval},
                            {"T_A": round(TA,4), "T_B": round(TB,4), "better_tool": winner,
                             "crossover_V": round(crossover,4) if crossover else "None"},
                            concl)
 
-                fig = make_comparison_plot(nA, CA, nB, CB, crossover)
+                # Corrected Plot Function Call
+                fig = make_comparison_plot(nA, CA, nB, CB, V_eval, crossover)
                 st.pyplot(fig)
 
                 if crossover:
@@ -760,7 +705,7 @@ elif module.startswith("3"):
                            {"V1": round(V1,4), "T1": round(T1,4), "life_change_%": round(pct,2)},
                            f"Changing speed by {dV}% changes tool life from {T0} to {T1:.4f} min ({pct:+.2f}%).")
 
-                fig = make_bar_plot(["Base  T0", "New  T1"], [T0, T1], ["#2c7be5","#e8820c"],
+                fig = make_bar_plot(["Base  T0", "New  T1"], [T0, T1], ["#2563eb","#f59e0b"],
                                     "Tool Life (min)", "Tool Life: Before vs After Parameter Change")
                 st.pyplot(fig)
 
@@ -928,32 +873,32 @@ elif module.startswith("5"):
                            f"Graphical solution: n={n5:.5f}, C={C5:.4f}. At V={V_pred}, T_predicted={T_pred:.4f} min.")
 
                 apply_style()
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
                 T_rng = np.linspace(min(l5)*0.5, max(l5)*1.8, 400)
                 V_fit = [cutting_speed_from_C(t, C5, n5) for t in T_rng]
-                ax1.scatter(l5, s5, color="#2c7be5", s=60, zorder=5, label="Data",
-                            edgecolors="#0d1f35", linewidths=0.5)
-                ax1.plot(T_rng, V_fit, color="#e8820c", lw=2, label="Fitted curve")
-                ax1.axvline(T_pred, color="#3cb371", ls="--", lw=1.2, label=f"T={T_pred:.2f} min")
-                ax1.axhline(V_pred, color="#3cb371", ls="--", lw=1.2)
+                ax1.scatter(l5, s5, color="#2563eb", s=80, zorder=5, label="Data",
+                            edgecolors="#ffffff", linewidths=1.2)
+                ax1.plot(T_rng, V_fit, color="#f59e0b", lw=2.5, label="Fitted curve")
+                ax1.axvline(T_pred, color="#10b981", ls="--", lw=2.0, label=f"T={T_pred:.2f} min")
+                ax1.axhline(V_pred, color="#10b981", ls="--", lw=2.0)
                 ax1.set_xscale("log"); ax1.set_yscale("log")
-                ax1.set_xlabel("T (min)"); ax1.set_ylabel("V (m/min)")
-                ax1.set_title("log(V) vs log(T)", fontweight="bold")
-                ax1.legend(fontsize=8)
+                ax1.set_xlabel("T (min)", fontsize=11, fontweight="500"); ax1.set_ylabel("V (m/min)", fontsize=11, fontweight="500")
+                ax1.set_title("log(V) vs log(T)", fontsize=12, fontweight="bold")
+                ax1.legend(fontsize=9)
                 ax1.xaxis.set_major_formatter(ticker.ScalarFormatter())
                 ax1.yaxis.set_major_formatter(ticker.ScalarFormatter())
-                ax1.grid(True, which="both", ls="--", lw=0.6, color="#d0dce8")
+                ax1.grid(True, which="both", ls="-", lw=0.5, color="#e2e8f0")
 
                 lT_rng = np.linspace(min(log_T5)-0.2, max(log_T5)+0.2, 200)
                 lV_fit = np.polyval(coeffs5, lT_rng)
-                ax2.scatter(log_T5, log_V5, color="#2c7be5", s=60, zorder=5, label="Data",
-                            edgecolors="#0d1f35", linewidths=0.5)
-                ax2.plot(lT_rng, lV_fit, color="#e8820c", lw=2, label=f"slope={slope5:.4f}")
-                ax2.set_xlabel("log\u2081\u2080(T)"); ax2.set_ylabel("log\u2081\u2080(V)")
-                ax2.set_title(f"Linear Log Space  |  n = {n5:.5f}", fontweight="bold")
-                ax2.legend(fontsize=8)
-                ax2.grid(True, ls="--", lw=0.6, color="#d0dce8")
+                ax2.scatter(log_T5, log_V5, color="#2563eb", s=80, zorder=5, label="Data",
+                            edgecolors="#ffffff", linewidths=1.2)
+                ax2.plot(lT_rng, lV_fit, color="#f59e0b", lw=2.5, label=f"slope={slope5:.4f}")
+                ax2.set_xlabel("log\u2081\u2080(T)", fontsize=11, fontweight="500"); ax2.set_ylabel("log\u2081\u2080(V)", fontsize=11, fontweight="500")
+                ax2.set_title(f"Linear Log Space  |  n = {n5:.5f}", fontsize=12, fontweight="bold")
+                ax2.legend(fontsize=9)
+                ax2.grid(True, ls="-", lw=0.5, color="#e2e8f0")
                 fig.tight_layout()
                 st.pyplot(fig)
 
@@ -1045,7 +990,7 @@ elif module.startswith("6"):
                            f"Extended Taylor: C_ext={C_ext:.4f}. New tool life T_new={T_new:.4f} min ({pct6:+.2f}% from reference).")
 
                 fig = make_bar_plot(["Reference T_ref", "New T_new"], [Tref, T_new],
-                                    ["#2c7be5","#e8820c"], "Tool Life (min)",
+                                    ["#2563eb","#f59e0b"], "Tool Life (min)",
                                     "Tool Life: Reference vs New Conditions")
                 st.pyplot(fig)
 
@@ -1087,7 +1032,7 @@ elif module.startswith("7"):
 
     if not log:
         st.markdown("""
-<div class="empty-state">
+<div class="info-box" style="text-align:center; padding: 40px; font-size: 1.1rem; font-family: 'Inter', sans-serif;">
   No calculations recorded yet.<br>
   Use Modules 1 through 6 and click Calculate — all results will appear here automatically.
 </div>""", unsafe_allow_html=True)
@@ -1095,38 +1040,38 @@ elif module.startswith("7"):
     else:
         # Header banner
         st.markdown(f"""
-<div class="concl-header">
-  <h2>Session Calculation Report</h2>
-  <p style="font-size:0.88rem;color:#a0c4e8;margin:0;">
-    Total calculations logged: <strong style="color:#7ec8ff;">{len(log)}</strong>
+<div style="background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 8px; padding: 22px 26px; margin-bottom: 24px;">
+  <h2 style="font-family: 'Inter', sans-serif; font-size: 1.5rem; font-weight: 700; color: #38bdf8; margin: 0 0 6px 0;">Session Calculation Report</h2>
+  <p style="font-size:0.95rem;color:#cbd5e1;margin:0;">
+    Total calculations logged: <strong style="color:#10b981;">{len(log)}</strong>
   </p>
 </div>""", unsafe_allow_html=True)
 
         # Per-entry display
         for i, entry in enumerate(log, 1):
             inp_html = "<br>".join(
-                f"<strong>{k}</strong>&nbsp;=&nbsp;{v}" for k, v in entry["inputs"].items()
+                f"<strong style='color:#64748b;'>{k}</strong>&nbsp;=&nbsp;{v}" for k, v in entry["inputs"].items()
             )
             out_html = "<br>".join(
-                f"<strong>{k}</strong>&nbsp;=&nbsp;{v}" for k, v in entry["outputs"].items()
+                f"<strong style='color:#64748b;'>{k}</strong>&nbsp;=&nbsp;{v}" for k, v in entry["outputs"].items()
             )
             st.markdown(f"""
-<div class="log-entry">
-  <div class="le-header">
+<div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 8px; padding: 18px 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+  <div style="font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
     [{i}] &nbsp; {entry['module']}
-    <span class="le-time">Logged at {entry['time']}</span>
+    <span style="font-size:0.8rem;color:#94a3b8;float:right;font-weight:500;">Logged at {entry['time']}</span>
   </div>
-  <div class="log-kv">
-    <div class="log-kv-col">
-      <strong>Inputs</strong>
-      <span style="font-size:0.82rem;line-height:1.75;">{inp_html}</span>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+    <div style="background: #f8fafc; border-radius: 6px; padding: 12px 16px;">
+      <strong style="display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:#2563eb; margin-bottom:6px;">Inputs</strong>
+      <span style="font-family: 'Share Tech Mono', monospace; font-size:0.85rem; color:#334155; line-height:1.7;">{inp_html}</span>
     </div>
-    <div class="log-kv-col">
-      <strong>Outputs</strong>
-      <span style="font-size:0.82rem;line-height:1.75;">{out_html}</span>
+    <div style="background: #f8fafc; border-radius: 6px; padding: 12px 16px;">
+      <strong style="display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:#2563eb; margin-bottom:6px;">Outputs</strong>
+      <span style="font-family: 'Share Tech Mono', monospace; font-size:0.85rem; color:#334155; line-height:1.7;">{out_html}</span>
     </div>
   </div>
-  <div class="concl-text">{entry['conclusion']}</div>
+  <div style="background: #f0fdf4; border-radius: 6px; padding: 12px 16px; font-size: 0.9rem; color: #064e3b; font-style: italic;">{entry['conclusion']}</div>
 </div>""", unsafe_allow_html=True)
 
         st.markdown("---")
@@ -1164,33 +1109,29 @@ elif module.startswith("7"):
         if len(all_T) >= 2:
             st.markdown("#### All Computed Tool Lives — Combined Chart")
             apply_style()
-            fig_s, ax_s = plt.subplots(figsize=(max(7, len(all_T)*1.1), 3.8))
+            fig_s, ax_s = plt.subplots(figsize=(max(8, len(all_T)*1.2), 4.5))
             labels_s = [f"[{i+1}] {t[1]}\n({t[0][:16]})" for i, t in enumerate(all_T)]
             vals_s   = [t[2] for t in all_T]
-            cols_s   = ["#2c7be5" if i % 2 == 0 else "#e8820c" for i in range(len(vals_s))]
-            bars_s   = ax_s.bar(labels_s, vals_s, color=cols_s, edgecolor="#c0cede", lw=0.8)
+            cols_s   = ["#2563eb" if i % 2 == 0 else "#f59e0b" for i in range(len(vals_s))]
+            
+            bars_s   = ax_s.bar(labels_s, vals_s, color=cols_s, edgecolor="#ffffff", lw=1.5, alpha=0.9)
             for bar, val in zip(bars_s, vals_s):
                 ax_s.text(bar.get_x()+bar.get_width()/2, bar.get_height()+max(vals_s)*0.015,
-                          f"{val:.2f}", ha="center", va="bottom", fontsize=8.5, color="#1a2e42")
-            ax_s.set_ylabel("Tool Life (min)", fontsize=10)
-            ax_s.set_title("All Computed Tool Life Values — Session Overview", fontsize=11, fontweight="bold")
+                          f"{val:.2f}", ha="center", va="bottom", fontsize=10, color="#0f172a", fontweight="600")
+                          
+            ax_s.set_ylabel("Tool Life (min)", fontsize=11, fontweight="500")
+            ax_s.set_title("All Computed Tool Life Values — Session Overview", fontsize=12, fontweight="bold", pad=12)
             ax_s.set_ylim(0, max(vals_s)*1.3)
-            ax_s.grid(axis="y", ls="--", lw=0.6, color="#d0dce8")
-            ax_s.tick_params(axis="x", labelsize=7.5)
+            ax_s.spines['top'].set_visible(False)
+            ax_s.spines['right'].set_visible(False)
             fig_s.tight_layout()
             st.pyplot(fig_s)
-
-        # Final written conclusion
-        st.markdown("---")
-        st.markdown("#### Plain-English Conclusions — Per Calculation")
-        concl_lines = "\n\n".join(f"[{i}]  {e['conclusion']}" for i, e in enumerate(log, 1))
-        st.markdown(f'<div class="result-box">{concl_lines}</div>', unsafe_allow_html=True)
 
         # Engineering principles
         st.markdown("---")
         st.markdown("#### Key Engineering Principles (Taylor's Model)")
         st.markdown("""
-<div class="info-box">
+<div class="info-box" style="background: #eff6ff; border-left-color: #3b82f6; color: #1e3a8a;">
   <strong>(1) Exponent n and sensitivity:</strong> A higher n (e.g., 0.4–0.5, typical for ceramics) means
   tool life falls slowly as speed rises — these tools tolerate aggressive speeds. A lower n
   (e.g., 0.1–0.15, typical for HSS) means a steep penalty — even a 25% speed increase can
